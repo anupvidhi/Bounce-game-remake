@@ -1,0 +1,46 @@
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #fff;
+}
+
+canvas {
+  border: 2px solid #000;
+  background: #f0f0f0;
+}
+
+#controls {
+  position: fixed;
+  bottom: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+#controls button {
+  width: 70px;
+  height: 70px;
+  font-size: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #ff6666;
+  color: white;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+#controls button:active {
+  background: #ff3333;
+  transform: scale(0.95);
+}
+
+/* Hide buttons on desktop */
+@media (min-width: 768px) {
+  #controls {
+    display: none;
+  }
+}
