@@ -2,19 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bounce Game Remake</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Bounce – Final</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <canvas id="gameCanvas" width="800" height="480"></canvas>
+  <div id="hud">Rings: <span id="ringCount">0</span></div>
+  <canvas id="game" width="800" height="480"></canvas>
 
-  <!-- Mobile-only controls -->
+  <!-- Mobile controls (big + spaced) -->
   <div id="controls">
-    <button id="leftBtn" aria-label="Move left">⟵</button>
+    <button id="leftBtn" aria-label="Left">⟵</button>
     <button id="jumpBtn" aria-label="Jump">⬆</button>
-    <button id="rightBtn" aria-label="Move right">⟶</button>
+    <button id="rightBtn" aria-label="Right">⟶</button>
   </div>
+
+  <div id="overlay" class="hidden"></div>
 
   <script src="game.js"></script>
 </body>
