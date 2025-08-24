@@ -1,88 +1,92 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-class Sprite {
-  constructor(imgSrc, frameWidth, frameHeight, frameCount, frameSpeed) {
-    this.image = new Image();
-    this.image.src = imgSrc;
-    this.frameWidth = frameWidth;
-    this.frameHeight = frameHeight;
-    this.frameCount = frameCount;
-    this.frameSpeed = frameSpeed;
-    this.currentFrame = 0;
-    this.frameTimer = 0;
-  }
+canvas.width = 480;
+canvas.height = 320;
 
-  update(deltaTime) {
-    this.frameTimer += deltaTime;
-    if (this.frameTimer >= this.frameSpeed) {
-      this.frameTimer = 0;
-      this.currentFrame = (this.currentFrame + 1) % this.frameCount;
-    }
-  }
+// Load ball sprite sheet
+const ballImg = new Image();
+ballImg.src = 'assets/ball.png';
 
-  draw(ctx, x, y, scale = 1) {
-    ctx.drawImage(
-      this.image,
-      this.currentFrame * this.frameWidth, 0, this.frameWidth, this.frameHeight,
-      x, y, this.frameWidth * scale, this.frameHeight * scale
-    );
-  }
-}
+let frame = 0;
+let frameTick = 0;
+const frameCount = 6;
+const frameWidth = 64;
+const frameHeight = 64;
 
-// Load sprites (assets need to be added separately)
-const ball   = new Sprite("assets/ball.png", 128, 128, 6, 100);
-const ring   = new Sprite("assets/ring.png", 128, 128, 8, 80);
-const spike  = new Sprite("assets/spike.png", 128, 128, 4, 200);
-const portal = new Sprite("assets/portal.png", 128, 128, 6, 120);
+let ball = {
+  x: 100,
+  y: 200,
+  dx: 0,
+  dy: 0,
+  onGround: false
+};
 
+const gravity = 0.5;
+const jumpPower = -8;
+
+// Input
 let keys = { left: false, right: false, up: false };
-
-// Touch buttons
-document.getElementById("leftBtn").addEventListener("touchstart", () => keys.left = true);
-document.getElementById("leftBtn").addEventListener("touchend", () => keys.left = false);
-document.getElementById("rightBtn").addEventListener("touchstart", () => keys.right = true);
-document.getElementById("rightBtn").addEventListener("touchend", () => keys.right = false);
-document.getElementById("jumpBtn").addEventListener("touchstart", () => keys.up = true);
-document.getElementById("jumpBtn").addEventListener("touchend", () => keys.up = false);
-
-// Keyboard controls
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") keys.left = true;
-  if (e.key === "ArrowRight") keys.right = true;
-  if (e.key === "ArrowUp") keys.up = true;
+document.addEventListener('keydown', e => {
+  if (e.code === 'ArrowLeft') keys.left = true;
+  if (e.code === 'ArrowRight') keys.right = true;
+  if (e.code === 'Space') keys.up = true;
 });
-document.addEventListener("keyup", e => {
-  if (e.key === "ArrowLeft") keys.left = false;
-  if (e.key === "ArrowRight") keys.right = false;
-  if (e.key === "ArrowUp") keys.up = false;
+document.addEventListener('keyup', e => {
+  if (e.code === 'ArrowLeft') keys.left = false;
+  if (e.code === 'ArrowRight') keys.right = false;
+  if (e.code === 'Space') keys.up = false;
 });
 
-let lastTime = 0;
+// Mobile controls
+document.getElementById('leftBtn').addEventListener('touchstart', () => keys.left = true);
+document.getElementById('leftBtn').addEventListener('touchend', () => keys.left = false);
+document.getElementById('rightBtn').addEventListener('touchstart', () => keys.right = true);
+document.getElementById('rightBtn').addEventListener('touchend', () => keys.right = false);
+document.getElementById('jumpBtn').addEventListener('touchstart', () => keys.up = true);
+document.getElementById('jumpBtn').addEventListener('touchend', () => keys.up = false);
 
-function gameLoop(timestamp) {
-  let deltaTime = timestamp - lastTime;
-  lastTime = timestamp;
+function update() {
+  // Movement
+  if (keys.left) ball.dx = -2;
+  else if (keys.right) ball.dx = 2;
+  else ball.dx = 0;
 
-  update(deltaTime);
-  draw(ctx);
+  // Jump
+  if (keys.up && ball.onGround) {
+    ball.dy = jumpPower;
+    ball.onGround = false;
+  }
 
-  requestAnimationFrame(gameLoop);
+  // Gravity
+  ball.dy += gravity;
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // Ground collision
+  if (ball.y + frameHeight/2 >= canvas.height) {
+    ball.y = canvas.height - frameHeight/2;
+    ball.dy = 0;
+    ball.onGround = true;
+  }
+
+  // Animate sprite
+  frameTick++;
+  if (frameTick > 5) {
+    frame = (frame + 1) % frameCount;
+    frameTick = 0;
+  }
 }
 
-function update(deltaTime) {
-  ball.update(deltaTime);
-  ring.update(deltaTime);
-  spike.update(deltaTime);
-  portal.update(deltaTime);
-}
-
-function draw(ctx) {
+function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ball.draw(ctx, 100, 300, 1);
-  ring.draw(ctx, 300, 250, 1);
-  spike.draw(ctx, 500, 350, 1);
-  portal.draw(ctx, 700, 200, 1.2);
+  ctx.drawImage(ballImg, frame * frameWidth, 0, frameWidth, frameHeight, ball.x, ball.y, frameWidth, frameHeight);
 }
 
-requestAnimationFrame(gameLoop);
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+ballImg.onload = () => { loop(); };
