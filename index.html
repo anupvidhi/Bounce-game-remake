@@ -1,56 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bounce Game</title>
-  <style>
-    body {
-      margin: 0;
-      background: #87CEEB;
-      font-family: monospace;
-    }
-    canvas {
-      display: block;
-      margin: auto;
-      background: #87CEEB;
-      border: 2px solid black;
-    }
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      padding: 5px 10px;
-      background: rgba(255,255,255,0.8);
-      border: 1px solid black;
-      border-radius: 5px;
-    }
-    #controls {
-      position: fixed;
-      bottom: 20px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-    }
-    .btn {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background: #ff6666;
-      border: none;
-      font-size: 24px;
-      color: white;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bounce Infinite</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div id="hud">Rings: 0</div>
-  <canvas id="gameCanvas" width="600" height="400"></canvas>
+  <canvas id="gameCanvas"></canvas>
+  <div id="hud">
+    <span id="rings">Rings: 0</span>
+    <span id="distance">Distance: 0 m</span>
+  </div>
   <div id="controls">
-    <button class="btn" id="left">←</button>
-    <button class="btn" id="jump">↑</button>
-    <button class="btn" id="right">→</button>
+    <button id="leftBtn">⟵</button>
+    <button id="jumpBtn">⟶</button>
+    <button id="rightBtn">⟶</button>
   </div>
   <script src="game.js"></script>
 </body>

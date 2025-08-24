@@ -1,172 +1,157 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let player = {
-  x: 50,
-  y: 150, // fixed spawn height
+let keys = {};
+let rings = 0;
+let distance = 0;
+
+const player = {
+  x: 100,
+  y: 300,
   width: 40,
   height: 40,
-  dy: 0,
-  dx: 0,
-  grounded: false
+  vy: 0,
+  onGround: false,
 };
 
-let gravity = 0.8;
+let cameraX = 0;
+let gravity = 0.6;
 let jumpPower = -12;
 let moveSpeed = 5;
 
-let keys = { left: false, right: false, up: false };
-let rings = 0;
+let platforms = [{ x: 0, y: 400, width: 800, height: 40 }];
+let spikes = [];
+let ringsList = [];
 
-// Platforms
-let platforms = [
-  {x:0, y:360, width:600, height:40},
-  {x:200, y:280, width:100, height:20},
-  {x:400, y:220, width:100, height:20},
-];
+// Input handling
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
 
-// Rings
-let collectibles = [
-  {x:220, y:240, collected:false},
-  {x:420, y:180, collected:false}
-];
+document.getElementById("leftBtn").addEventListener("touchstart", () => keys["ArrowLeft"] = true);
+document.getElementById("leftBtn").addEventListener("touchend", () => keys["ArrowLeft"] = false);
 
-// Spikes
-let spikes = [
-  {x:300, y:340, width:40, height:20}
-];
+document.getElementById("rightBtn").addEventListener("touchstart", () => keys["ArrowRight"] = true);
+document.getElementById("rightBtn").addEventListener("touchend", () => keys["ArrowRight"] = false);
 
-function respawn(){
-  player.x = 50;
-  player.y = 150;
-  player.dx = 0;
-  player.dy = 0;
-  player.grounded = false;
-}
-
-// Controls
-document.getElementById("left").addEventListener("touchstart", ()=> keys.left=true);
-document.getElementById("left").addEventListener("touchend", ()=> keys.left=false);
-document.getElementById("right").addEventListener("touchstart", ()=> keys.right=true);
-document.getElementById("right").addEventListener("touchend", ()=> keys.right=false);
-document.getElementById("jump").addEventListener("touchstart", ()=> {
-  if(player.grounded){
-    player.dy = jumpPower;
-    player.grounded = false;
+document.getElementById("jumpBtn").addEventListener("touchstart", () => {
+  if (player.onGround) {
+    player.vy = jumpPower;
+    player.onGround = false;
   }
 });
 
-function update(){
-  // Movement
-  if(keys.left) player.dx = -moveSpeed;
-  else if(keys.right) player.dx = moveSpeed;
-  else player.dx = 0;
+// Generate random objects
+function generateObjects() {
+  let lastPlat = platforms[platforms.length - 1];
+  let newX = lastPlat.x + lastPlat.width + Math.random() * 100 + 100;
+  let newY = 350 + Math.random() * 100 - 50;
+  platforms.push({ x: newX, y: newY, width: 200, height: 40 });
 
-  player.dy += gravity;
-  player.x += player.dx;
-  player.y += player.dy;
-
-  player.grounded = false;
-
-  // Platform collision
-  for(let p of platforms){
-    if(player.x < p.x + p.width &&
-       player.x + player.width > p.x &&
-       player.y < p.y + p.height &&
-       player.y + player.height > p.y){
-      if(player.dy > 0){
-        player.y = p.y - player.height;
-        player.dy = 0;
-        player.grounded = true;
-      }
-    }
+  if (Math.random() > 0.6) {
+    spikes.push({ x: newX + 50, y: newY - 20, width: 40, height: 20 });
   }
 
-  // Spike collision
-  for(let s of spikes){
-    if(player.x < s.x + s.width &&
-       player.x + player.width > s.x &&
-       player.y < s.y + s.height &&
-       player.y + player.height > s.y){
-       respawn();
-    }
-  }
-
-  // Collect rings
-  for(let c of collectibles){
-    if(!c.collected &&
-       player.x < c.x + 20 &&
-       player.x + player.width > c.x &&
-       player.y < c.y + 20 &&
-       player.y + player.height > c.y){
-         c.collected = true;
-         rings++;
-         document.getElementById("hud").innerText = "Rings: " + rings;
-    }
-  }
-
-  // Respawn if fall
-  if(player.y > canvas.height){
-    respawn();
+  if (Math.random() > 0.5) {
+    ringsList.push({ x: newX + 100, y: newY - 80, radius: 15, collected: false });
   }
 }
 
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Clouds
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.arc(100,80,30,0,Math.PI*2);
-  ctx.arc(130,80,40,0,Math.PI*2);
-  ctx.arc(160,80,30,0,Math.PI*2);
-  ctx.fill();
-
-  // Platforms
-  ctx.fillStyle = "brown";
-  for(let p of platforms){
-    ctx.fillRect(p.x,p.y,p.width,p.height);
-    ctx.fillStyle="green";
-    ctx.fillRect(p.x,p.y,p.width,10);
-    ctx.fillStyle="brown";
+// Update loop
+function update() {
+  if (keys["ArrowLeft"]) player.x -= moveSpeed;
+  if (keys["ArrowRight"]) {
+    player.x += moveSpeed;
+    distance += 0.1; // forward-only distance
   }
 
-  // Rings
-  for(let c of collectibles){
-    if(!c.collected){
-      ctx.beginPath();
-      ctx.arc(c.x+10, c.y+10, 15, 0, Math.PI*2);
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "gold";
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = "gold";
-      ctx.stroke();
-      ctx.shadowBlur = 0;
+  player.vy += gravity;
+  player.y += player.vy;
+
+  player.onGround = false;
+  for (let p of platforms) {
+    if (player.x < p.x + p.width &&
+        player.x + player.width > p.x &&
+        player.y + player.height > p.y &&
+        player.y + player.height < p.y + p.height) {
+      player.y = p.y - player.height;
+      player.vy = 0;
+      player.onGround = true;
     }
   }
 
-  // Spikes
-  ctx.fillStyle="gray";
-  for(let s of spikes){
+  for (let s of spikes) {
+    if (player.x < s.x + s.width &&
+        player.x + player.width > s.x &&
+        player.y + player.height > s.y) {
+      respawn();
+    }
+  }
+
+  for (let r of ringsList) {
+    if (!r.collected &&
+        Math.hypot(player.x - r.x, player.y - r.y) < r.radius + 20) {
+      r.collected = true;
+      rings++;
+    }
+  }
+
+  if (player.y > canvas.height) respawn();
+
+  cameraX = player.x - canvas.width / 2;
+
+  if (platforms[platforms.length - 1].x < player.x + canvas.width) {
+    generateObjects();
+  }
+}
+
+// Respawn
+function respawn() {
+  player.x = cameraX + 100;
+  player.y = 200;
+  player.vy = 0;
+}
+
+// Draw loop
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(player.x - cameraX, player.y, player.width, player.height);
+
+  ctx.fillStyle = "#654321";
+  for (let p of platforms) {
+    ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
+  }
+
+  ctx.fillStyle = "red";
+  for (let s of spikes) {
     ctx.beginPath();
-    ctx.moveTo(s.x, s.y+s.height);
-    ctx.lineTo(s.x+s.width/2, s.y);
-    ctx.lineTo(s.x+s.width, s.y+s.height);
+    ctx.moveTo(s.x - cameraX, s.y + s.height);
+    ctx.lineTo(s.x + s.width / 2 - cameraX, s.y);
+    ctx.lineTo(s.x + s.width - cameraX, s.y + s.height);
     ctx.closePath();
     ctx.fill();
   }
 
-  // Player (red ball)
-  ctx.fillStyle="red";
-  ctx.beginPath();
-  ctx.arc(player.x+player.width/2, player.y+player.height/2, player.width/2, 0, Math.PI*2);
-  ctx.fill();
+  ctx.strokeStyle = "yellow";
+  ctx.lineWidth = 4;
+  for (let r of ringsList) {
+    if (!r.collected) {
+      ctx.beginPath();
+      ctx.arc(r.x - cameraX, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  document.getElementById("rings").innerText = "Rings: " + rings;
+  document.getElementById("distance").innerText = "Distance: " + Math.floor(distance) + " m";
 }
 
-function gameLoop(){
+function loop() {
   update();
   draw();
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
-
-gameLoop();
+loop();
