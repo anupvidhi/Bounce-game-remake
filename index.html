@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Bounce Game Remake</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas" width="800" height="480"></canvas>
 
-  <!-- Mobile Controls -->
+  <!-- Mobile-only controls -->
   <div id="controls">
-    <button id="leftBtn">⟵</button>
-    <button id="jumpBtn">⬆</button>
-    <button id="rightBtn">⟶</button>
+    <button id="leftBtn" aria-label="Move left">⟵</button>
+    <button id="jumpBtn" aria-label="Jump">⬆</button>
+    <button id="rightBtn" aria-label="Move right">⟶</button>
   </div>
 
   <script src="game.js"></script>

@@ -1,18 +1,14 @@
-# Nokia Bounce Remake (Web)
+# Bounce Game Remake
 
-A simple remake of the classic **Nokia Bounce** game using HTML5 + JavaScript.
+This is a single‑level web remake with mobile touch controls and an animated ball sprite.
 
-## 🎮 How to Play
-- **Left / Right Arrow keys** → Move ball
-- **Spacebar** → Jump
-- **Touch left side (mobile)** → Move left
-- **Touch right side (mobile)** → Move right
-- **Touch middle (mobile)** → Jump
+## Run locally
+Just open `index.html` in a browser.
 
-## 🚀 Play Online
-1. Open this repo in GitHub
-2. Go to **Settings → Pages**
-3. Set "Branch" = `main` and folder = `/root`
-4. Visit: `https://your-username.github.io/bounce-game/`
+## Deploy on GitHub Pages
+1. Create a repo and upload all files.
+2. In **Settings → Pages**, choose `main` branch and `/root` folder.
+3. Your site will appear at `https://<username>.github.io/<repo-name>/`.
 
-Enjoy!
+### Assets
+- Put your sprite sheet at `assets/ball.png` (6 frames, 128×128 each, width 768×128).
