@@ -1,24 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Bounce – Final</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bounce Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #87CEEB;
+      font-family: monospace;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #87CEEB;
+      border: 2px solid black;
+    }
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 5px 10px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid black;
+      border-radius: 5px;
+    }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+    }
+    .btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: #ff6666;
+      border: none;
+      font-size: 24px;
+      color: white;
+    }
+  </style>
 </head>
 <body>
-  <div id="hud">Rings: <span id="ringCount">0</span></div>
-  <canvas id="game" width="800" height="480"></canvas>
-
-  <!-- Mobile controls (big + spaced) -->
+  <div id="hud">Rings: 0</div>
+  <canvas id="gameCanvas" width="600" height="400"></canvas>
   <div id="controls">
-    <button id="leftBtn" aria-label="Left">⟵</button>
-    <button id="jumpBtn" aria-label="Jump">⬆</button>
-    <button id="rightBtn" aria-label="Right">⟶</button>
+    <button class="btn" id="left">←</button>
+    <button class="btn" id="jump">↑</button>
+    <button class="btn" id="right">→</button>
   </div>
-
-  <div id="overlay" class="hidden"></div>
-
   <script src="game.js"></script>
 </body>
 </html>

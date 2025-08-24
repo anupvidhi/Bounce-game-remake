@@ -1,228 +1,172 @@
-// Bounce – Final Build
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const hudCount = document.getElementById('ringCount');
-const overlay = document.getElementById('overlay');
-
-// Load assets
-const assets = {
-  bg: loadImage('assets/background.png'),
-  ball: loadImage('assets/ball.png'),      // 6 frames, 128x128 each
-  ring: loadImage('assets/ring.png'),
-  spike: loadImage('assets/spike.png'),
-  platform: loadImage('assets/platform.png'),
-  portal: loadImage('assets/portal.png')
+let player = {
+  x: 50,
+  y: 150, // fixed spawn height
+  width: 40,
+  height: 40,
+  dy: 0,
+  dx: 0,
+  grounded: false
 };
 
-function loadImage(src){
-  const img = new Image();
-  img.src = src;
-  return img;
-}
+let gravity = 0.8;
+let jumpPower = -12;
+let moveSpeed = 5;
 
-// Camera
-let camX = 0;
+let keys = { left: false, right: false, up: false };
+let rings = 0;
 
-// Level data
-const FRAME_W = 128, FRAME_H = 128, BALL_FRAMES = 6;
-const TILE_W = 128, TILE_H = 64;
-
-const platforms = [
-  // x, y are world coordinates
-  {x: 0,   y: 360},  // start
-  {x: 200, y: 300},
-  {x: 380, y: 260},
-  {x: 580, y: 320},
-  {x: 780, y: 260},
-  {x: 980, y: 320},
+// Platforms
+let platforms = [
+  {x:0, y:360, width:600, height:40},
+  {x:200, y:280, width:100, height:20},
+  {x:400, y:220, width:100, height:20},
 ];
 
-const rings = [
-  {x: 235, y: 240, taken:false},
-  {x: 610, y: 220, taken:false},
+// Rings
+let collectibles = [
+  {x:220, y:240, collected:false},
+  {x:420, y:180, collected:false}
 ];
 
-const spikes = [
-  {x: 470, y: 332}, // near third platform gap
+// Spikes
+let spikes = [
+  {x:300, y:340, width:40, height:20}
 ];
 
-const portal = {x: 1150, y: 240};
-
-// Player
-const player = {
-  x: 40,
-  y: 260,
-  vx: 0, vy: 0,
-  speed: 3.2,
-  onGround: false,
-  frame: 0, frameTimer: 0
-};
-let ringCount = 0;
-let respawn = {x: 40, y: 260};
-
-// Input
-const keys = {left:false, right:false, up:false};
-document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft') keys.left = true;
-  if (e.key === 'ArrowRight') keys.right = true;
-  if (e.key === 'ArrowUp' || e.key === ' ') keys.up = true;
-});
-document.addEventListener('keyup', e => {
-  if (e.key === 'ArrowLeft') keys.left = false;
-  if (e.key === 'ArrowRight') keys.right = false;
-  if (e.key === 'ArrowUp' || e.key === ' ') keys.up = false;
-});
-bindBtn('leftBtn','left'); bindBtn('rightBtn','right'); bindBtn('jumpBtn','up');
-function bindBtn(id, key){
-  const el = document.getElementById(id);
-  const on = e=>{ e.preventDefault(); keys[key]=true; };
-  const off= e=>{ e.preventDefault(); keys[key]=false; };
-  el.addEventListener('touchstart', on, {passive:false});
-  el.addEventListener('touchend', off, {passive:false});
-  el.addEventListener('touchcancel', off, {passive:false});
-  el.addEventListener('mousedown', on);
-  el.addEventListener('mouseup', off);
-  el.addEventListener('mouseleave', off);
+function respawn(){
+  player.x = 50;
+  player.y = 150;
+  player.dx = 0;
+  player.dy = 0;
+  player.grounded = false;
 }
 
-// Physics
-const GRAV = 0.6, JUMP = -10, FRICTION = 0.85;
-
-// Helpers
-function aabb(ax,ay,aw,ah,bx,by,bw,bh){
-  return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
-}
-
-function update(dt){
-  // Horizontal input
-  if (keys.left)  player.vx = -player.speed;
-  else if (keys.right) player.vx = player.speed;
-  else player.vx *= FRICTION;
-
-  // Jump
-  if (keys.up && player.onGround){
-    player.vy = JUMP;
-    player.onGround = false;
+// Controls
+document.getElementById("left").addEventListener("touchstart", ()=> keys.left=true);
+document.getElementById("left").addEventListener("touchend", ()=> keys.left=false);
+document.getElementById("right").addEventListener("touchstart", ()=> keys.right=true);
+document.getElementById("right").addEventListener("touchend", ()=> keys.right=false);
+document.getElementById("jump").addEventListener("touchstart", ()=> {
+  if(player.grounded){
+    player.dy = jumpPower;
+    player.grounded = false;
   }
+});
 
-  // Gravity
-  player.vy += GRAV;
+function update(){
+  // Movement
+  if(keys.left) player.dx = -moveSpeed;
+  else if(keys.right) player.dx = moveSpeed;
+  else player.dx = 0;
 
-  // Integrate
-  player.x += player.vx;
-  player.y += player.vy;
+  player.dy += gravity;
+  player.x += player.dx;
+  player.y += player.dy;
 
-  // Collide with platforms (treat each platform as TILE_W x TILE_H)
-  player.onGround = false;
-  for (const p of platforms){
-    const px = p.x, py = p.y, pw = TILE_W, ph = TILE_H;
-    // Only check if close to camera for performance
-    if (px+pw > camX-200 && px < camX + canvas.width + 200){
-      // From above landing
-      if (aabb(player.x, player.y, FRAME_W, FRAME_H, px, py, pw, ph)){
-        // simplistic: put player on top if falling
-        const wasAbove = (player.y + FRAME_H - player.vy) <= py;
-        if (wasAbove && player.vy >= 0){
-          player.y = py - FRAME_H;
-          player.vy = 0;
-          player.onGround = true;
-          // update respawn to latest platform touched
-          respawn = {x: player.x, y: player.y};
-        } else {
-          // avoid clipping sides crudely
-          if (player.x < px) player.x = px - FRAME_W;
-          else player.x = px + pw;
-          player.vx = 0;
-        }
+  player.grounded = false;
+
+  // Platform collision
+  for(let p of platforms){
+    if(player.x < p.x + p.width &&
+       player.x + player.width > p.x &&
+       player.y < p.y + p.height &&
+       player.y + player.height > p.y){
+      if(player.dy > 0){
+        player.y = p.y - player.height;
+        player.dy = 0;
+        player.grounded = true;
       }
     }
   }
 
-  // Rings
-  for (const r of rings){
-    if (!r.taken && aabb(player.x+20, player.y+20, 88, 88, r.x+32, r.y+32, 64, 64)){
-      r.taken = true; ringCount += 1; hudCount.textContent = ringCount.toString();
+  // Spike collision
+  for(let s of spikes){
+    if(player.x < s.x + s.width &&
+       player.x + player.width > s.x &&
+       player.y < s.y + s.height &&
+       player.y + player.height > s.y){
+       respawn();
     }
   }
 
-  // Spikes – if touch, respawn
-  for (const s of spikes){
-    if (aabb(player.x+24, player.y+80, 80, 40, s.x+10, s.y+40, 108, 78)){
-      // pop + respawn
-      player.x = respawn.x; player.y = respawn.y;
-      player.vx = 0; player.vy = 0;
-      // optionally flash
+  // Collect rings
+  for(let c of collectibles){
+    if(!c.collected &&
+       player.x < c.x + 20 &&
+       player.x + player.width > c.x &&
+       player.y < c.y + 20 &&
+       player.y + player.height > c.y){
+         c.collected = true;
+         rings++;
+         document.getElementById("hud").innerText = "Rings: " + rings;
     }
   }
 
-  // Portal – complete
-  if (aabb(player.x+40, player.y+40, 48, 48, portal.x+24, portal.y+24, 80, 80)){
-    overlay.classList.remove('hidden');
-    overlay.textContent = 'Level Complete! Rings: ' + ringCount + ' ✅';
-  }
-
-  // Camera follows player (center-ish)
-  const target = player.x + FRAME_W/2 - canvas.width/2;
-  camX += (target - camX) * 0.12;
-  if (camX < 0) camX = 0;
-
-  // Animate ball frames
-  player.frameTimer += dt;
-  const msPerFrame = (Math.abs(player.vx) > 0.2) ? 70 : 110;
-  if (player.frameTimer >= msPerFrame){
-    player.frame = (player.frame + 1) % BALL_FRAMES;
-    player.frameTimer = 0;
+  // Respawn if fall
+  if(player.y > canvas.height){
+    respawn();
   }
 }
 
 function draw(){
-  // Background
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  if (assets.bg.complete){
-    // parallax slight
-    const bgX = - (camX * 0.3) % canvas.width;
-    ctx.drawImage(assets.bg, bgX, 0, canvas.width, canvas.height);
-    ctx.drawImage(assets.bg, bgX + canvas.width, 0, canvas.width, canvas.height);
-  } else {
-    ctx.fillStyle = '#9ed0ff';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-  }
+
+  // Clouds
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(100,80,30,0,Math.PI*2);
+  ctx.arc(130,80,40,0,Math.PI*2);
+  ctx.arc(160,80,30,0,Math.PI*2);
+  ctx.fill();
 
   // Platforms
-  for (const p of platforms){
-    const sx = p.x - camX;
-    if (sx > -TILE_W && sx < canvas.width){
-      ctx.drawImage(assets.platform, sx, p.y, TILE_W, TILE_H);
-    }
+  ctx.fillStyle = "brown";
+  for(let p of platforms){
+    ctx.fillRect(p.x,p.y,p.width,p.height);
+    ctx.fillStyle="green";
+    ctx.fillRect(p.x,p.y,p.width,10);
+    ctx.fillStyle="brown";
   }
 
   // Rings
-  for (const r of rings){
-    if (r.taken) continue;
-    const sx = r.x - camX;
-    ctx.drawImage(assets.ring, sx, r.y, 128, 128);
+  for(let c of collectibles){
+    if(!c.collected){
+      ctx.beginPath();
+      ctx.arc(c.x+10, c.y+10, 15, 0, Math.PI*2);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "gold";
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "gold";
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
   }
 
   // Spikes
-  for (const s of spikes){
-    const sx = s.x - camX;
-    ctx.drawImage(assets.spike, sx, s.y, 128, 128);
+  ctx.fillStyle="gray";
+  for(let s of spikes){
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y+s.height);
+    ctx.lineTo(s.x+s.width/2, s.y);
+    ctx.lineTo(s.x+s.width, s.y+s.height);
+    ctx.closePath();
+    ctx.fill();
   }
 
-  // Portal
-  ctx.drawImage(assets.portal, portal.x - camX, portal.y, 128, 128);
-
-  // Player (ball)
-  const sx = player.frame * FRAME_W;
-  ctx.drawImage(assets.ball, sx, 0, FRAME_W, FRAME_H, player.x - camX, player.y, FRAME_W, FRAME_H);
+  // Player (red ball)
+  ctx.fillStyle="red";
+  ctx.beginPath();
+  ctx.arc(player.x+player.width/2, player.y+player.height/2, player.width/2, 0, Math.PI*2);
+  ctx.fill();
 }
 
-let last = 0;
-function loop(ts){
-  const dt = ts - last; last = ts;
-  update(dt || 16);
+function gameLoop(){
+  update();
   draw();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
-requestAnimationFrame(loop);
+
+gameLoop();
