@@ -1,220 +1,55 @@
-(()=>{
-const cvs=document.getElementById('game'),ctx=cvs.getContext('2d');
-function resize(){cvs.width=innerWidth; cvs.height=innerHeight;} resize(); addEventListener('resize',resize);
+const canvas=document.getElementById("gameCanvas");
+const ctx=canvas.getContext("2d");
+let keys={left:false,right:false,jump:false};
+document.getElementById("left").ontouchstart=()=>keys.left=true;
+document.getElementById("left").ontouchend=()=>keys.left=false;
+document.getElementById("right").ontouchstart=()=>keys.right=true;
+document.getElementById("right").ontouchend=()=>keys.right=false;
+document.getElementById("jump").ontouchstart=()=>keys.jump=true;
+document.getElementById("jump").ontouchend=()=>keys.jump=false;
 
-const GRAV=0.75, JUMP=-13, SPEED=4, GROUND_Y=0; // ground computed per platform
-const PLAYER_R=22;
-const WORLD={platforms:[],spikes:[],rings:[],clouds:[], lastGenX:0};
-
-const player={x:120,y:180,dx:0,dy:0,onGround:false,rot:0,lastSafe:{x:120,y:180}};
-let cameraX=0, maxForwardX=player.x, meters=0, ringCount=0;
-
-// --- Controls (mobile only) ---
-let holdL=false, holdR=false;
-const leftBtn=document.getElementById('btn-left');
-const rightBtn=document.getElementById('btn-right');
-const jumpBtn=document.getElementById('btn-jump');
-function hold(btn, setter){
-  btn.addEventListener('touchstart',e=>{e.preventDefault(); setter(true);},{passive:false});
-  btn.addEventListener('touchend',e=>{e.preventDefault(); setter(false);},{passive:false});
-  btn.addEventListener('touchcancel',e=>{e.preventDefault(); setter(false);},{passive:false});
-}
-hold(leftBtn,v=>holdL=v); hold(rightBtn,v=>holdR=v);
-jumpBtn.addEventListener('touchstart',e=>{e.preventDefault(); if(player.onGround){player.dy=JUMP; player.onGround=false;}},{passive:false});
-
-// --- Helpers ---
-function rand(a,b){return Math.random()*(b-a)+a|0;}
-
-// Initial terrain & clouds
-function initWorld(){
-  WORLD.platforms.push({x:0,y:cvs.height-70,w:800,h:70});
-  WORLD.lastGenX=800;
-  for(let i=0;i<12;i++){
-    WORLD.clouds.push({x:rand(0,2000),y:rand(40,200),r:rand(18,36)});
-  }
-}
-initWorld();
-
-function genChunk(){
-  // Base next platform
-  const last=WORLD.platforms[WORLD.platforms.length-1];
-  const gap=rand(60,160);
-  const w=rand(160,260);
-  let y=last.y + rand(-90,90);
-  y=Math.max(140, Math.min(cvs.height-90, y));
-  const x=last.x+last.w+gap;
-  WORLD.platforms.push({x,y,w,h:20});
-
-  // Occasionally add mid-air step
-  if(Math.random()<0.35){
-    const sX=x+rand(40,w-60), sY=y-rand(60,110);
-    WORLD.platforms.push({x:sX,y:sY,w:rand(80,140),h:16});
-  }
-  // Spikes
-  if(Math.random()<0.55){
-    WORLD.spikes.push({x:x+rand(10,w-40),y:y-18,w:26,h:18});
-  }
-  // Ring above
-  if(Math.random()<0.7){
-    WORLD.rings.push({x:x+rand(30,w-30),y:y-rand(70,120),r:14,hit:false});
-  }
-  // More clouds ahead
-  for(let i=0;i<3;i++){
-    WORLD.clouds.push({x:x+rand(0,600),y:rand(30,220),r:rand(18,36)});
-  }
-  WORLD.lastGenX = x+w;
-}
-
-// Collision: circle vs AABB
-function circleRect(cx,cy,cr, r){
-  const nx=Math.max(r.x, Math.min(cx, r.x+r.w));
-  const ny=Math.max(r.y, Math.min(cy, r.y+r.h));
-  const dx=cx-nx, dy=cy-ny;
-  return dx*dx+dy*dy <= cr*cr;
-}
-
+let ball={x:100,y:300,r:20,vy:0,onGround:false,angle:0,rings:0,meters:0};
+let gravity=0.8,jumpPower=-12,speed=4;
+let platforms=[{x:0,y:350,w:1000}];
+let spikes=[],rings=[],clouds=[];
+function reset(){ball.x=100;ball.y=300;ball.vy=0;ball.angle=0;ball.rings=0;ball.meters=0;
+platforms=[{x:0,y:350,w:1000}];spikes=[];rings=[];clouds=[];}
+function spawn(){let last=platforms[platforms.length-1];let nx=last.x+last.w+100;
+let ny=350+(Math.random()*40-20);platforms.push({x:nx,y:ny,w:600});
+if(Math.random()<0.5)spikes.push({x:nx+200,y:ny-20});if(Math.random()<0.5)rings.push({x:nx+300,y:ny-80});
+if(Math.random()<0.3)clouds.push({x:nx+Math.random()*500,y:50+Math.random()*150});}
 function update(){
-  // Input → velocity (no auto-roll)
-  if(holdL) player.dx=-SPEED; else if(holdR) player.dx=SPEED; else player.dx=0;
-
-  // Physics
-  player.dy+=GRAV;
-  player.x+=player.dx;
-  player.y+=player.dy;
-
-  // Platforms collision (landing only, from above)
-  player.onGround=false;
-  for(const p of WORLD.platforms){
-    // broad-phase
-    if(player.x+PLAYER_R < p.x-40 || player.x-PLAYER_R > p.x+p.w+40) continue;
-    // check landing
-    const wasAbove = (player.y-PLAYER_R) <= p.y;
-    if(wasAbove && circleRect(player.x, player.y, PLAYER_R, p)){
-      player.y = p.y-PLAYER_R;
-      player.dy = 0;
-      player.onGround = true;
-      player.lastSafe.x = player.x; player.lastSafe.y = player.y;
-    }
-  }
-
-  // Spikes
-  for(const s of WORLD.spikes){
-    if(player.x+PLAYER_R < s.x-20 || player.x-PLAYER_R > s.x+s.w+20) continue;
-    if(circleRect(player.x, player.y, PLAYER_R*0.9, {x:s.x,y:s.y,w:s.w,h:s.h+8})) {
-      // auto respawn
-      player.x = player.lastSafe.x; player.y = player.lastSafe.y; player.dx=0; player.dy=0;
-      break;
-    }
-  }
-
-  // Collect rings
-  for(const r of WORLD.rings){
-    if(r.hit) continue;
-    if(Math.hypot(player.x-r.x, player.y-r.y) < (PLAYER_R*0.6 + r.r)){
-      r.hit=true; ringCount++;
-    }
-  }
-
-  // Fall off screen → respawn
-  if(player.y - PLAYER_R > cvs.height+200){
-    player.x = player.lastSafe.x; player.y = player.lastSafe.y; player.dx=0; player.dy=0;
-  }
-
-  // Rolling rotation (based on horizontal speed)
-  player.rot += (player.dx / PLAYER_R);
-
-  // Camera follow (horizontal only)
-  cameraX = player.x - cvs.width*0.33;
-  if(cameraX<0) cameraX=0;
-
-  // Distance only increases when moving forward beyond previous best
-  if(player.x > maxForwardX){
-    meters += (player.x - maxForwardX)*0.05; // tune scaling → meters
-    maxForwardX = player.x;
-  }
-
-  // Generate ahead
-  while(WORLD.lastGenX < player.x + cvs.width*1.5) genChunk();
-  // Trim far-behind objects for perf
-  const cutoff=cameraX-200;
-  WORLD.platforms = WORLD.platforms.filter(p=>p.x+p.w>cutoff);
-  WORLD.spikes    = WORLD.spikes.filter(s=>s.x+s.w>cutoff);
-  WORLD.rings     = WORLD.rings.filter(r=>r.x>cutoff-50 && !r.hit);
-  WORLD.clouds    = WORLD.clouds.filter(cl=>cl.x>cutoff-400);
+  if(keys.left)ball.x-=speed;
+  if(keys.right){ball.x+=speed;ball.meters+=0.1;}
+  if(keys.jump&&ball.onGround){ball.vy=jumpPower;ball.onGround=false;}
+  ball.vy+=gravity;ball.y+=ball.vy;
+  ball.onGround=false;
+  for(let p of platforms){if(ball.x>p.x&&ball.x<p.x+p.w&&ball.y+ball.r>=p.y){
+    ball.y=p.y-ball.r;ball.vy=0;ball.onGround=true;}}
+  for(let s of spikes){if(Math.abs(ball.x-s.x)<20&&Math.abs(ball.y-s.y)<20)reset();}
+  for(let i=rings.length-1;i>=0;i--){let r=rings[i];if(Math.abs(ball.x-r.x)<20&&Math.abs(ball.y-r.y)<20){ball.rings++;rings.splice(i,1);}}
+  if(ball.y>canvas.height)reset();
+  if(ball.x>platforms[platforms.length-1].x+200)spawn();
+  ball.angle+=(keys.left?-0.1:keys.right?0.1:0);
 }
-
-function drawBackground(){
-  // sky already set via CSS; draw clouds (parallax 0.5)
-  ctx.fillStyle='#fff';
-  for(const cl of WORLD.clouds){
-    const sx = cl.x - cameraX*0.5;
-    const y = cl.y;
-    // puffy cloud made of 3–4 circles
-    ctx.beginPath(); ctx.arc(sx, y, cl.r, 0, Math.PI*2);
-    ctx.arc(sx+cl.r*0.9, y+cl.r*0.1, cl.r*1.2, 0, Math.PI*2);
-    ctx.arc(sx-cl.r*0.8, y+cl.r*0.2, cl.r, 0, Math.PI*2);
-    ctx.arc(sx+cl.r*0.1, y-cl.r*0.6, cl.r*0.8, 0, Math.PI*2);
-    ctx.fill();
-  }
-}
-
-function drawWorld(){
-  ctx.save();
-  ctx.translate(-cameraX,0);
-
-  // Platforms (cartoony green top)
-  for(const p of WORLD.platforms){
-    ctx.fillStyle='#6b4b2a'; ctx.fillRect(p.x, p.y, p.w, p.h);
-    ctx.fillStyle='#2ecc71'; ctx.fillRect(p.x, p.y, p.w, 6);
-  }
-
-  // Spikes
-  ctx.fillStyle='#d9d9d9';
-  for(const s of WORLD.spikes){
-    ctx.beginPath();
-    ctx.moveTo(s.x, s.y+s.h);
-    ctx.lineTo(s.x+s.w*0.5, s.y);
-    ctx.lineTo(s.x+s.w, s.y+s.h);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Rings (glow)
-  for(const r of WORLD.rings){
-    if(r.hit) continue;
-    ctx.save();
-    ctx.shadowBlur=10; ctx.shadowColor='gold';
-    ctx.lineWidth=5; ctx.strokeStyle='gold'; ctx.beginPath();
-    ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
-    ctx.restore();
-  }
-
-  // Player (rolling ball with stripes)
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.rotate(player.rot);
-  ctx.fillStyle='red';
-  ctx.beginPath(); ctx.arc(0,0,PLAYER_R,0,Math.PI*2); ctx.fill();
-  // drop shadow
-  ctx.globalAlpha=0.25; ctx.beginPath(); ctx.ellipse(0,PLAYER_R*0.85,PLAYER_R*0.9,PLAYER_R*0.35,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#87CEEB";ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="#fff";for(let c of clouds){ctx.beginPath();ctx.arc(c.x-ball.x+100,c.y,30,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle="#654321";for(let p of platforms){ctx.fillRect(p.x-ball.x+100,p.y, p.w, canvas.height-p.y);}
+  ctx.fillStyle="red";ctx.beginPath();ctx.arc(100,ball.y,ball.r,0,Math.PI*2);ctx.fill();
   // stripes
-  ctx.lineWidth=4; ctx.strokeStyle='#fff';
-  ctx.beginPath(); ctx.moveTo(-PLAYER_R,0); ctx.lineTo(PLAYER_R,0); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0,-PLAYER_R); ctx.lineTo(0,PLAYER_R); ctx.stroke();
-  ctx.restore();
-
-  ctx.restore();
+  ctx.save();ctx.translate(100,ball.y);ctx.rotate(ball.angle);
+  ctx.strokeStyle="#fff";ctx.beginPath();ctx.moveTo(-ball.r,0);ctx.lineTo(ball.r,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-ball.r);ctx.lineTo(0,ball.r);ctx.stroke();ctx.restore();
+  // shadow
+  let shadowScale=1-Math.min(1,(350-ball.y)/100);
+  ctx.fillStyle="rgba(0,0,0,0.3)";ctx.beginPath();
+  ctx.ellipse(100,350,ball.r*shadowScale*1.2,ball.r*0.4*shadowScale,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="yellow";for(let r of rings){ctx.beginPath();ctx.arc(r.x-ball.x+100,r.y,10,0,Math.PI*2);ctx.stroke();}
+  ctx.fillStyle="black";for(let s of spikes){ctx.beginPath();ctx.moveTo(s.x-ball.x+100,s.y);
+  ctx.lineTo(s.x-ball.x+90,s.y+40);ctx.lineTo(s.x-ball.x+110,s.y+40);ctx.closePath();ctx.fill();}
+  document.getElementById("meters").innerText=Math.floor(ball.meters);
+  document.getElementById("rings").innerText=ball.rings;
 }
-
-function loop(){
-  update();
-  ctx.clearRect(0,0,cvs.width,cvs.height);
-  drawBackground();
-  drawWorld();
-  // HUD
-  document.getElementById('hud-distance').textContent = Math.floor(meters)+' m';
-  document.getElementById('hud-rings').textContent = ringCount+' rings';
-  requestAnimationFrame(loop);
-}
-loop();
-})();
+function loop(){update();draw();requestAnimationFrame(loop);}loop();

@@ -1,26 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-<title>Bounce Infinite (Mobile)</title>
-<link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Bounce Infinite</title>
+  <style>
+    body { margin:0; overflow:hidden; background:#87CEEB; }
+    canvas { display:block; margin:0 auto; background:#87CEEB; }
+    #hud { position:fixed; top:10px; left:50%; transform:translateX(-50%);
+           font-family:sans-serif; font-size:20px; color:#000; background:rgba(255,255,255,0.6);
+           padding:5px 10px; border-radius:8px; }
+    #controls { position:fixed; bottom:20px; width:100%; text-align:center; }
+    .btn { width:80px; height:80px; margin:0 30px; border-radius:50%;
+           background:#fff; border:2px solid #000; font-size:30px; }
+  </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-
-<div id="hud">
-  <span id="hud-distance">0 m</span>
-  <span>•</span>
-  <span id="hud-rings">0 rings</span>
-</div>
-
+<div id="hud">Meters: <span id="meters">0</span> | Rings: <span id="rings">0</span></div>
+<canvas id="gameCanvas" width="800" height="480"></canvas>
 <div id="controls">
-  <button id="btn-left"  aria-label="Move Left">◀</button>
-  <button id="btn-jump"  aria-label="Jump">⬆</button>
-  <button id="btn-right" aria-label="Move Right">▶</button>
+  <button class="btn" id="left">⟵</button>
+  <button class="btn" id="jump">⤒</button>
+  <button class="btn" id="right">⟶</button>
 </div>
-
 <script src="game.js"></script>
 </body>
 </html>
