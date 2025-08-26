@@ -1,17 +1,9 @@
-body,html {
-  margin:0; padding:0; overflow:hidden; background:#87CEEB;
-}
-#gameCanvas {
-  display:block; width:100vw; height:100vh; background:transparent;
-}
-#hud {
-  position:fixed; top:10px; left:50%; transform:translateX(-50%);
-  font-family:sans-serif; font-size:20px; color:#000; background:#fff8;
-  padding:5px 15px; border-radius:10px;
-}
-#controls {
-  position:fixed; bottom:20px; width:100%; display:flex; justify-content:space-between; padding:0 10px;
-}
-#controls button {
-  width:80px; height:80px; font-size:30px; border:none; border-radius:50%; background:#fff; box-shadow:0 5px 10px rgba(0,0,0,0.3);
-}
+html,body{margin:0;padding:0;height:100%;background:#87CEEB;overflow:hidden}
+#game{display:block;width:100vw;height:100vh;touch-action:none;background:transparent}
+#hud{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:14px;
+  padding:6px 14px;background:rgba(255,255,255,.85);border-radius:12px;
+  font:700 18px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111}
+#controls{position:fixed;bottom:20px;left:0;right:0;display:flex;justify-content:space-between;
+  padding:0 18px;pointer-events:auto}
+#controls button{width:84px;height:84px;border:0;border-radius:50%;background:#fff;
+  box-shadow:0 10px 20px rgba(0,0,0,.25);font-size:30px}
