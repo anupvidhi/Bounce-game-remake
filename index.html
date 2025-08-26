@@ -2,16 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Bounce Infinite Mobile</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ball Game</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #87CEEB; }
+    canvas { display: block; }
+    .controls {
+      position: fixed; bottom: 20px; width: 100%; text-align: center;
+    }
+    .controls button {
+      width: 80px; height: 80px; margin: 0 15px; border-radius: 50%;
+      border: none; background: rgba(255,255,255,0.8); font-size: 24px;
+    }
+  </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <div id="hud">
-    <span id="meters">0 m</span> | <span id="rings">0 rings</span>
-  </div>
-  <div id="controls">
+  <div class="controls">
     <button id="left">◀</button>
     <button id="jump">⬆</button>
     <button id="right">▶</button>

@@ -1,12 +1,86 @@
-(()=>{
-const c=document.getElementById("gameCanvas"),x=c.getContext("2d");
-let W=window.innerWidth,H=window.innerHeight;c.width=W;c.height=H;
-let ball={x:100,y:H-100,r:30,dx:2,dy:0,rot:0,rings:0,meters:0};
-let gravity=0.5,jump=-10,ground=H-60;
-function drawBall(){x.save();x.translate(ball.x,ball.y);x.rotate(ball.rot);x.fillStyle="red";x.beginPath();x.arc(0,0,ball.r,0,Math.PI*2);x.fill();x.strokeStyle="white";x.lineWidth=4;x.beginPath();x.moveTo(-ball.r,0);x.lineTo(ball.r,0);x.stroke();x.restore();}
-function update(){ball.dy+=gravity;ball.y+=ball.dy;ball.x+=ball.dx;ball.rot+=0.1; if(ball.y>ground){ball.y=ground;ball.dy=0;} ball.meters+=0.1;}
-function loop(){x.clearRect(0,0,W,H);update();drawBall();document.getElementById("meters").innerText=Math.floor(ball.meters)+" m";document.getElementById("rings").innerText=ball.rings+" rings";requestAnimationFrame(loop);}loop();
-document.getElementById("jump").ontouchstart=()=>{if(ball.y>=ground)ball.dy=jump;};
-document.getElementById("left").ontouchstart=()=>{ball.dx=-2;};
-document.getElementById("right").ontouchstart=()=>{ball.dx=2;};
-})();
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const player = {
+  x: 100,
+  y: 300,
+  radius: 20,
+  dx: 0,
+  dy: 0,
+  onGround: false
+};
+
+const gravity = 0.5;
+const jumpPower = -10;
+const moveSpeed = 3;
+let cameraX = 0;
+
+let leftPressed = false;
+let rightPressed = false;
+
+document.getElementById("left").addEventListener("touchstart", () => leftPressed = true);
+document.getElementById("left").addEventListener("touchend", () => leftPressed = false);
+document.getElementById("right").addEventListener("touchstart", () => rightPressed = true);
+document.getElementById("right").addEventListener("touchend", () => rightPressed = false);
+document.getElementById("jump").addEventListener("touchstart", () => {
+  if (player.onGround) {
+    player.dy = jumpPower;
+    player.onGround = false;
+  }
+});
+
+function update() {
+  if (leftPressed) {
+    player.dx = -moveSpeed;
+  } else if (rightPressed) {
+    player.dx = moveSpeed;
+  } else {
+    player.dx = 0;
+  }
+
+  player.dy += gravity;
+  player.x += player.dx;
+  player.y += player.dy;
+
+  if (player.y + player.radius > canvas.height - 50) {
+    player.y = canvas.height - 50 - player.radius;
+    player.dy = 0;
+    player.onGround = true;
+  } else {
+    player.onGround = false;
+  }
+
+  cameraX = player.x - canvas.width / 2;
+}
+
+function draw() {
+  ctx.fillStyle = "#87CEEB";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  ctx.fillStyle = "#654321";
+  ctx.fillRect(0, canvas.height - 50, 99999, 50);
+
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+  ctx.fillStyle = "red";
+  ctx.fill();
+  ctx.strokeStyle = "white";
+  ctx.moveTo(player.x - player.radius, player.y);
+  ctx.lineTo(player.x + player.radius, player.y);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
