@@ -2,20 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bounce Infinite</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Bounce Infinite Mobile</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
   <div id="hud">
-    <span id="rings">Rings: 0</span>
-    <span id="distance">Distance: 0 m</span>
+    <span id="meters">0 m</span> | <span id="rings">0 rings</span>
   </div>
   <div id="controls">
-    <button id="leftBtn">⟵</button>
-    <button id="jumpBtn">⟶</button>
-    <button id="rightBtn">⟶</button>
+    <button id="left">◀</button>
+    <button id="jump">⬆</button>
+    <button id="right">▶</button>
   </div>
   <script src="game.js"></script>
 </body>

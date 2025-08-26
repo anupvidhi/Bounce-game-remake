@@ -1,10 +1,20 @@
-# Bounce – Final
-Short single level with floating platforms, rings, spike, portal, HUD, mobile controls.
+# Bounce Infinite Mobile
+A cartoony remake of the classic Bounce game, reimagined as an **infinite side-scroller** for mobile.
 
-## Play locally
-Open `index.html` in a browser (Chrome/Safari/Firefox).
+## Features
+- Rolling red ball with strips (rotation visible)
+- Infinite forward scrolling
+- Random terrain with spikes + glowing rings
+- Cartoony parallax clouds
+- HUD: meters + rings (fixed at top)
+- Mobile-only controls (big buttons)
+- Instant auto-respawn
 
-## Deploy (GitHub Pages)
-- Push all files to a repo.
-- Settings → Pages → Branch: `main`, Folder: `/root` → Save.
-- Open the provided URL.
+## Controls (Mobile Only)
+- ◀ Left
+- ▶ Right
+- ⬆ Jump
+
+## Hosting
+Upload this repo to GitHub and enable **GitHub Pages** in repo settings.  
+Play instantly at: `https://<username>.github.io/<repo-name>/`

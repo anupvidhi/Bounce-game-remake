@@ -1,39 +1,17 @@
-body {
-  margin: 0;
-  overflow: hidden;
-  background: #87CEEB;
+body,html {
+  margin:0; padding:0; overflow:hidden; background:#87CEEB;
 }
 #gameCanvas {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  background: transparent;
+  display:block; width:100vw; height:100vh; background:transparent;
 }
 #hud {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: Arial, sans-serif;
-  font-size: 20px;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 2px 2px 4px #000;
-  display: flex;
-  gap: 20px;
+  position:fixed; top:10px; left:50%; transform:translateX(-50%);
+  font-family:sans-serif; font-size:20px; color:#000; background:#fff8;
+  padding:5px 15px; border-radius:10px;
 }
 #controls {
-  position: absolute;
-  bottom: 20px;
-  width: 100%;
-  display: flex;
-  justify-content: space-around;
+  position:fixed; bottom:20px; width:100%; display:flex; justify-content:space-between; padding:0 10px;
 }
 #controls button {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  font-size: 28px;
-  border: none;
-  background: rgba(255, 255, 255, 0.7);
+  width:80px; height:80px; font-size:30px; border:none; border-radius:50%; background:#fff; box-shadow:0 5px 10px rgba(0,0,0,0.3);
 }
